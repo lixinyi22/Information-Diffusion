@@ -14,8 +14,8 @@ from collections import defaultdict
 from gensim import corpora, models
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-API_KEY = "lTNjFBQiu8kbvP9BGwWx9zur"
-SECRET_KEY = "tvEy0DF68pNek4vZgwiLRpFoFHFAyyT3"
+API_KEY = "your api key"
+SECRET_KEY = "your secret key"
 
 def ensure_dir(path: str) -> None:
     '''Make sure the directory exists
