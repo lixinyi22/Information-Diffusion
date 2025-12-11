@@ -7,9 +7,9 @@ In this paper, we propose MCID, a Multi-Channel integrated framework for Informa
 
 # Dataset
 
-The dataset in `./data` contains the Twitter, Weibo, Zhihu and Douban datasets that we used in the experiments for evaluation. The basic information of the datasets is as follows.
+The dataset in `./data` contains the Twitter, Weibo, and Zhihu datasets that we used in the experiments for evaluation. The basic information of the datasets is as follows.
 
-|             | Twitter | Weibo | Douban  |
+|             | Twitter | Weibo | Zhihu  |
 | ----------- | ------- | ----- | ------  |
 | #user       | 8,292   | 6,512 | 30,000  |
 | #cascades   | 2,798   | 2,267 | 3,326   |
