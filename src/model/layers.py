@@ -139,20 +139,3 @@ class TransformerBlock(nn.Module):
             X = Q + V_att
             output = self.FFN(X) + X
         return output
-
-
-    def __init__(self, emb_size, num_channels):
-        super().__init__()
-        self.gate = nn.Sequential(
-            nn.Linear(emb_size * num_channels, emb_size),
-            nn.ReLU(),
-            nn.Linear(emb_size, num_channels),
-            nn.Softmax(dim=-1)
-        )
-    
-    def forward(self, embeddings):
-        concat = torch.cat(embeddings, dim=-1)
-        weights = self.gate(concat)  # (batch, num_channels)
-        fused = sum(w.unsqueeze(-1) * emb 
-                   for w, emb in zip(weights.unbind(-1), embeddings))
-        return fused
