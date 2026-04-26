@@ -1,6 +1,33 @@
 import numpy as np
 import torch
 import scipy.sparse as sp
+import utils.Constants as Constants
+
+
+def BuildUserInfoParticipation(all_cascade, user_size, info_size):
+    """Build a sparse (user_size, info_size) binary matrix from training cascades.
+
+    Entry [u, i] = 1 means user u participated in cascade (info item) i.
+    """
+    rows, cols = [], []
+    for cascade_idx in range(len(all_cascade)):
+        for user_id in all_cascade[cascade_idx]:
+            if user_id in (Constants.PAD, Constants.EOS):
+                continue
+            rows.append(user_id)
+            cols.append(cascade_idx)
+
+    rows = torch.LongTensor(rows)
+    cols = torch.LongTensor(cols)
+    values = torch.ones(len(rows), dtype=torch.float32)
+    adj = torch.sparse_coo_tensor(
+        torch.stack([rows, cols]), values, (user_size, info_size)
+    ).coalesce()
+    adj = torch.sparse_coo_tensor(
+        adj.indices(), torch.ones_like(adj.values()), adj.size()
+    )
+    return adj
+
 
 def LoadDiffusionGraph(all_cascade, user_size, window=10):
     user_cont = {}
@@ -40,21 +67,24 @@ def LoadDiffusionGraph(all_cascade, user_size, window=10):
         for i in range(length):
             indices.append(source[i])
             data.append(1)
-            
+
 
     H_U = sp.csr_matrix((data, indices, indptr), shape=(len(user_cont.keys())-idx, user_size))
 
-    H_U_sum = 1.0 / H_U.sum(axis=1).reshape(1, -1)
-    H_U_sum[H_U_sum == float("inf")] = 0
+    '''H_U_sum = 1.0 / H_U.sum(axis=1).reshape(1, -1)
+    H_U_sum[H_U_sum == float("inf")] = 0'''
+    H_U_row_sum = H_U.sum(axis=1).reshape(1, -1)
+    H_U_sum = np.divide(1.0, H_U_row_sum, out=np.zeros_like(H_U_row_sum, dtype=float), where=(H_U_row_sum != 0))
 
     # BH_T = H_S.T.multiply(1.0 / H_S.sum(axis=1).reshape(1, -1))
     BH_T = H_U.T.multiply(H_U_sum)
     BH_T = BH_T.T
     H = H_U.T
 
-    H_sum = 1.0 / H.sum(axis=1).reshape(1, -1)
-    H_sum[H_sum == float("inf")] = 0
-
+    '''H_sum = 1.0 / H.sum(axis=1).reshape(1, -1)
+    H_sum[H_sum == float("inf")] = 0'''
+    H_row_sum = H.sum(axis=1).reshape(1, -1)
+    H_sum = np.divide(1.0, H_row_sum, out=np.zeros_like(H_row_sum, dtype=float), where=(H_row_sum != 0))
     DH = H.T.multiply(H_sum)
     # DH = H.T.multiply(1.0 / H.sum(axis=1).reshape(1, -1))
     DH = DH.T
@@ -70,4 +100,5 @@ def _convert_sp_mat_to_sp_tensor(X):
     col = torch.Tensor(coo.col).long()
     index = torch.stack([row, col])
     data = torch.FloatTensor(coo.data)
-    return torch.sparse.FloatTensor(index, data, torch.Size(coo.shape))
+    #return torch.sparse.FloatTensor(index, data, torch.Size(coo.shape))
+    return torch.sparse_coo_tensor(index, data, torch.Size(coo.shape), dtype=torch.float32)

@@ -1,22 +1,28 @@
 # Introduction
 
-This repository contains the datasets and associated code used in the paper: A Multi-Channel Integrated Framework for
-Information Diffusion
-
-In this paper, we propose MCID, a Multi-Channel integrated framework for Information Diffusion. MCID introduces information-side modeling through three complementary channels: a user–user relation channel, an information interactive channel, and an information contextual channel. By integrating structural, interactive, and contextual perspectives, MCID enables comprehensive representation learning beyond traditional user-centric approaches.
+This repository contains the datasets and associated code used in the paper: An Unified Multi-Channel Framework for Information Diffusion.
 
 # Dataset
 
-The dataset in `./data` contains the Twitter, Weibo, and Zhihu datasets that we used in the experiments for evaluation. The basic information of the datasets is as follows.
-
-|             | Twitter | Weibo | Zhihu  |
-| ----------- | ------- | ----- | ------  |
-| #user       | 8,292   | 6,512 | 30,000  |
-| #cascades   | 2,798   | 2,267 | 3,326   |
-| #Links      | 86,768  | -     | -       |
-| Avg. Length | 5.39    | 43.73 | 12.29   |
-
+The dataset in `./data` contains the Twitter, Weibo, Zhihu and KuaiRand datasets that we used in the experiments for evaluation.
 Each dataset contains all the original cascades, the information content embedding, cascade ID dict and user ID dict.
+
+## Data Format
+
+Each dataset folder (e.g., `./data/Twitter/`) contains the following files:
+
+- **Cascade files**:
+  - `cascade.txt`, `cascadevalid.txt`, `cascadetest.txt`: Training, validation, and test cascade sequences. Each line represents a cascade in the format `user_id,timestamp user_id,timestamp ...`, where users are ordered by their participation time in the diffusion process.
+  - `cascade_id.txt`, `cascadevalid_id.txt`, `cascadetest_id.txt`: Corresponding information IDs for each cascade.
+
+- **Index mapping files** (pickle format):
+  - `u2idx.pickle`: Dictionary mapping user IDs to indices
+  - `idx2u.pickle`: Dictionary mapping indices to user IDs
+
+- **Content embedding file**:
+  - `id2embedding.pickle`: Dictionary mapping information IDs to their pre-computed content embeddings
+
+The data loading utilities in `src/utils/DataConstruct.py` automatically handle the parsing and preprocessing of these files during training and evaluation.
 
 # CODE
 
@@ -55,22 +61,24 @@ python run.py
 # Folder Structure
 
 ```
-Information-Diffusion/
+Information_Diffusion/
 ├── data/                          # Dataset directory
-│   ├── Twitter/                   
-│   ├── Weibo/                     
-│   └── Zhihu/                     
-├── src/                           # Source code directory
-│   ├── model/                     # Model implementation
-│   │   ├── layers.py              # Neural network layers (Transformer, etc.)
-│   │   └── model.py               # Main model architecture (MCID)
-│   ├── utils/                     # Utility functions
-│   │   ├── Constants.py           # Constants and configurations
-│   │   ├── DataConstruct.py       # Data loading and preprocessing
-│   │   ├── GraphConstruct.py      # Graph construction utilities
-│   │   ├── Metrics.py             # Evaluation metrics
-│   │   └── Optim.py               # Optimizer utilities
-│   └── run.py                     # Main entry point for training and evaluation
-├── README.md                      # Project documentation
-└── requirements.txt               # Python dependencies
+│   ├── Twitter_0607/              # Twitter cascade data
+│   ├── Weibo/                     # Weibo cascade data
+│   ├── Zhihu/                     # Zhihu cascade data
+│   ├── KuaiRand/                  # KuaiRand cascade data
+├── src/                       # Source code directory
+│   ├── model/                 # Model implementation
+│   │   ├── layers.py          # Neural network layers
+│   │   ├── model.py           # Main MCID architecture
+│   ├── utils/                 # Utility functions
+│   │   ├── Constants.py       # Constants and configurations
+│   │   ├── DataConstruct.py   # Data loading and preprocessing
+│   │   ├── GraphConstruct.py  # Graph construction utilities
+│   │   ├── Metrics.py         # Evaluation metrics
+│   │   ├── Optim.py           # Optimizer utilities
+│   │   └── compute_stats.py   # Dataset statistics utilities
+│   ├── run.py                 # Main entry point for training and evaluation
+├── README.md                  # Project documentation
+└── requirements.txt           # Python dependencies
 ```

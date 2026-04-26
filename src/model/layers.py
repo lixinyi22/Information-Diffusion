@@ -15,7 +15,7 @@ class IntervalTimeEncoder(nn.Module):
 
 
     def forward(self,inputs,timestamp):
-        batch_size,max_len=inputs.size()
+        '''batch_size,max_len=inputs.size()
 
         pass_time=timestamp[:,1:]-timestamp[:,:-1]
         pass_time=fn.relu(((pass_time / self.time_interval) * self.n_time_interval).long())
@@ -25,8 +25,35 @@ class IntervalTimeEncoder(nn.Module):
         time_embedding_one_hot=time_embedding_one_hot.scatter_(1, pass_time, 1).cuda()
         time_embedding = self.linear_1(time_embedding_one_hot)  # [batch_size, max_len, output_dim]
         time_embedding=time_embedding.view(batch_size, max_len, self.output_dim).cuda()
+'''
+        batch_size,max_len=inputs.size()
+        device = timestamp.device  # 获取输入张量的设备
 
-        return time_embedding.cuda()
+        # 计算时间间隔：timestamp[:,1:]-timestamp[:,:-1] 的形状是 (batch_size, max_len-1)
+        # 第一个位置没有前一个时间戳，使用0或第一个时间戳本身
+        if max_len > 1:
+            # 计算相邻时间戳的差值
+            time_diffs = timestamp[:,1:] - timestamp[:,:-1]  # (batch_size, max_len-1)
+            # 第一个位置使用0（表示没有时间间隔），或者使用第一个时间戳
+            # 这里使用0填充第一个位置
+            first_time = torch.zeros(batch_size, 1, device=device, dtype=timestamp.dtype)
+            pass_time = torch.cat([first_time, time_diffs], dim=1)  # (batch_size, max_len)
+        else:
+            # 如果 max_len <= 1，直接使用零
+            pass_time = torch.zeros(batch_size, max_len, device=device, dtype=timestamp.dtype)
+
+        # 将时间间隔转换为区间索引
+        pass_time = fn.relu(((pass_time / self.time_interval) * self.n_time_interval).long())
+        # 确保索引不超过 n_time_interval
+        pass_time = torch.clamp(pass_time, 0, self.n_time_interval)
+        pass_time = pass_time.view(batch_size*max_len, 1)
+
+        time_embedding_one_hot = torch.zeros(batch_size*max_len, self.n_time_interval+1, device=device)
+        time_embedding_one_hot = time_embedding_one_hot.scatter_(1, pass_time, 1)
+        time_embedding = self.linear_1(time_embedding_one_hot)  # [batch_size*max_len, output_dim]
+        time_embedding = time_embedding.view(batch_size, max_len, self.output_dim)
+
+        return time_embedding
 
 class TransformerBlock(nn.Module):
 

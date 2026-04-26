@@ -8,7 +8,7 @@ import logging
 import pickle
 
 class Options(object):
-    
+
     def __init__(self, data_name = 'Twitter'):
         #train file path.
         self.train_data = data_name+'/cascade.txt'
@@ -30,20 +30,20 @@ def Split_data(data_name, with_EOS=True, max_len = 500):
     options = Options(data_name)
     _u2idx = {}
     #idx2u = []
-    
+
     with open(options.u2idx_dict, 'rb') as handle:
         _u2idx = pickle.load(handle)
-    with open(options.ui2idx_dict, 'rb') as handle:
-        _ui2idx = pickle.load(handle)
+    '''with open(options.ui2idx_dict, 'rb') as handle:
+        _ui2idx = pickle.load(handle)'''
     with open(options.content_embedding, 'rb') as handle:
         _content_embedding = pickle.load(handle)
     user_size = len(_u2idx)
-    
+
     def build_dataset(dataset_path: str):
         t_cascades = []
         timestamps = []
         max_time, min_time = 0, 1000000000000
-    
+
         for line in open(dataset_path):
             if len(line.strip()) == 0:
                 continue
@@ -62,24 +62,24 @@ def Split_data(data_name, with_EOS=True, max_len = 500):
                         max_time = float(timestamp)
                     if float(timestamp) < min_time:
                         min_time = float(timestamp)
-            
-            if len(userlist) > max_len:    
+
+            if len(userlist) > max_len:
                 userlist = userlist[:max_len]
                 timestamplist = timestamplist[:max_len]
-                
+
             if len(userlist) >= 1:
                 if with_EOS:
                     userlist.append(Constants.EOS)
                     timestamplist.append(Constants.EOS)
                 t_cascades.append(userlist)
                 timestamps.append(timestamplist)
-                
-        '''ordered by timestamps'''        
-        order = [i[0] for i in sorted(enumerate(timestamps), key=lambda x:x[1])]
+
+        '''ordered by timestamps'''
+        '''order = [i[0] for i in sorted(enumerate(timestamps), key=lambda x:x[1])]
         timestamps = sorted(timestamps)
-        t_cascades[:] = [t_cascades[i] for i in order]
+        t_cascades[:] = [t_cascades[i] for i in order]'''
         return t_cascades, timestamps, max_time, min_time
-    
+
     def build_content_embedding(dataset_path: str):
         content_embedding = []
         info_id_list = []
@@ -90,7 +90,7 @@ def Split_data(data_name, with_EOS=True, max_len = 500):
             content_embedding.append(_content_embedding[info_id])
             info_id_list.append(info_id)
         return content_embedding, info_id_list
-    
+
     '''data split'''
     max_time, min_time = 0, 1000000000000
     train, train_t, train_max_time, train_min_time = build_dataset(options.train_data)
@@ -112,11 +112,11 @@ def Split_data(data_name, with_EOS=True, max_len = 500):
     valid_content_embedding, valid_id = build_content_embedding(options.valid_data_id)
     test_content_embedding, test_id = build_content_embedding(options.test_data_id)
     info_size = len(train_content_embedding)
-    
+
     train = [train, train_t, train_content_embedding, train_id]
     valid = [valid, valid_t, valid_content_embedding, valid_id]
     test = [test, test_t, test_content_embedding, test_id]
-    
+
     t_cascades = train[0] + valid[0] + test[0]
     total_len =  sum(len(i)-1 for i in t_cascades)
     train_size = len(train_t)
@@ -126,23 +126,23 @@ def Split_data(data_name, with_EOS=True, max_len = 500):
     logging.info(f"total size: {len(t_cascades)}")
     logging.info(f"average length: {total_len/len(t_cascades)}")
     logging.info(f'maximum length: {max(len(cas) for cas in t_cascades)}')
-    logging.info(f'minimum length: {min(len(cas) for cas in t_cascades)}')    
-    logging.info(f"user size:%d"%(user_size-2))           
-    
+    logging.info(f'minimum length: {min(len(cas) for cas in t_cascades)}')
+    logging.info(f"user size:%d"%(user_size-2))
+
     return user_size, info_size, train, valid, test, max_time-min_time
 
 def LoadContentEmbedding(data_name):
     options = Options(data_name)
     with open(options.content_embedding, 'rb') as handle:
         content_embedding_dict = pickle.load(handle)
-        
+
     content_embedding = []
     for line in open(options.train_data_id):
         if len(line.strip()) == 0:
             continue
         info_id = int(line.strip())
         content_embedding.append(content_embedding_dict[info_id])
-        
+
     content_embedding = torch.tensor(content_embedding, dtype=torch.float32)
     return content_embedding
 
@@ -176,7 +176,7 @@ class DataConstruct(object):
             self.content_embedding = [self.content_embedding[num[i]] for i in range(0, len(num))]
             self.idx = [self.idx[num[i]] for i in range(0, len(num))]
             self.original_idx = [self.original_idx[num[i]] for i in range(0, len(num))]
-            
+
     def __iter__(self):
         return self
 
@@ -197,7 +197,7 @@ class DataConstruct(object):
             inst_data = np.array([
                 inst + [Constants.PAD] * (max_len - len(inst))
                 for inst in insts])
-        
+
             inst_data_tensor = Variable(
                 torch.LongTensor(inst_data), volatile=self.test)
 
@@ -220,7 +220,7 @@ class DataConstruct(object):
             #seq_id = torch.LongTensor(self.original_idx[start_idx:end_idx])
             seq_data = pad_to_longest(seq_insts)
             seq_data_timestamp = pad_to_longest(seq_timestamp)
-            
+
             return seq_data, seq_data_timestamp, seq_content_embedding, seq_id
         else:
 

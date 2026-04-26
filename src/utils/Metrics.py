@@ -50,7 +50,7 @@ class Metrics(object):
 
 		scores = {'hits@'+str(k):[] for k in k_list}
 		scores.update({'map@'+str(k):[] for k in k_list})
-		
+
 		# 获取k_list中的最大值
 		max_k = max(k_list)
 		# 保存topk预测和真实标签
@@ -58,12 +58,12 @@ class Metrics(object):
 			'topk_predictions': [],  # 每个sample的topk预测用户编号
 			'y_true': []  # 对应的真实标签
 		}
-		
+
 		for p_, y_ in zip(y_prob, y_true):
 			if y_ != self.PAD:
 				scores_len += 1.0
 				p_sort = p_.argsort()
-				
+
 				for k in k_list:
 					topk = p_sort[-k:][::-1]
 					scores['hits@' + str(k)].extend([1. if y_ in topk else 0.])
